@@ -1,0 +1,80 @@
+version: '2.2'
+services:
+  reverseproxy:
+    image: traefik # The official Traefik docker image
+    labels:
+      - "traefik.frontend.rule=Host:status.localhost"
+    container_name: reverseproxy
+    command: --api --docker # Enables the web UI and tells Traefik to listen to docker
+    ports:
+      - "80:80"     # The HTTP port
+      - "8080:8080" # The Web UI (enabled by --api)
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock # So that Traefik can listen to the Docker events
+      #- ${CONFIG_FOLDER}/traefik.toml:/traefik.toml
+    networks:
+      - elk
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.6.2
+    labels:
+      - "traefik.frontend.rule=Host:elastic.localhost"
+    container_name: elasticsearch
+    volumes:
+      - ${CONFIG_FOLDER}/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - ${DATA_FOLDER}/elasticsearch:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    hostname: elasticsearch
+    networks:
+      - elk
+  logstash:
+    image: docker.elastic.co/logstash/logstash-oss:6.6.2
+    labels:
+      - "traefik.frontend.rule=Host:logstash.localhost"
+      - "co.elastic.logs/module=apache2"
+      - "co.elastic.logs/module=logstash"
+    container_name: logstash
+    volumes:
+      - ${CONFIG_FOLDER}/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ${LOGSTASH_PIPELINE_FOLDER}:/usr/share/logstash/pipeline:ro
+    ports:
+      - "5000:5000"
+      - "9600:9600"
+    depends_on:
+      - elasticsearch
+    hostname: logstash
+    networks:
+      - elk
+  filebeats:
+    image: docker.elastic.co/beats/filebeat-oss:6.6.2
+    container_name: filebeats
+    volumes:
+      - ${CONFIG_FOLDER}/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ${LOGS_FOLDER}:/usr/share/filebeat/logs
+    hostname: filebeats
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+  kibana:
+    image: docker.elastic.co/kibana/kibana-oss:6.6.2
+    environment:
+      xpack.monitoring.enabled: 'true'
+      # xpack.watcher.enabled: 'true'
+      # xpack.ml.enabled: 'true'
+    labels:
+      - "traefik.frontend.rule=Host:kibana.localhost"
+    container_name: kibana
+    volumes:
+      - ${CONFIG_FOLDER}/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+    ports:
+      - 5601:5601
+    hostname: kibana
+    networks:
+      - elk
+    depends_on:
+      - elasticsearch
+networks:
+  elk:
+    driver: bridge
