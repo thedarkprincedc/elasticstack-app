@@ -41,6 +41,7 @@ services:
     ports:
       - "5000:5000"
       - "9600:9600"
+      - "12345:12345"
     depends_on:
       - elasticsearch
     hostname: logstash

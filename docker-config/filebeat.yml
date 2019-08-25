@@ -1,8 +1,9 @@
 filebeat.inputs:
 - type: log
-  enabled: true
+  enabled: false
   paths:
     - /usr/share/filebeat/logs/*.log
+
 - type: log
   enabled: true
   paths:
@@ -10,9 +11,13 @@ filebeat.inputs:
   fields:
     apache: true
   fields_under_root: true
+
 - type: syslog
+  enabled: true
   protocol.udp:
-    host: "localhost:9000"
+    host: "localhost:12345"
+  fields:
+    syslog: true
 outputs:
   console:
     pretty: true
