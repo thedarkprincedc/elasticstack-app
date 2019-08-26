@@ -15,7 +15,7 @@ services:
     networks:
       - elk
   elasticsearch:
-    image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.6.2
+    image: docker.elastic.co/elasticsearch/elasticsearch-oss:7.3.1
     labels:
       - "traefik.frontend.rule=Host:elastic.localhost"
     container_name: elasticsearch
@@ -29,7 +29,7 @@ services:
     networks:
       - elk
   logstash:
-    image: docker.elastic.co/logstash/logstash-oss:6.6.2
+    image: docker.elastic.co/logstash/logstash-oss:7.3.1
     labels:
       - "traefik.frontend.rule=Host:logstash.localhost"
       - "co.elastic.logs/module=apache2"
@@ -48,7 +48,7 @@ services:
     networks:
       - elk
   filebeats:
-    image: docker.elastic.co/beats/filebeat-oss:6.6.2
+    image: docker.elastic.co/beats/filebeat-oss:7.3.1
     container_name: filebeats
     volumes:
       - ${CONFIG_FOLDER}/filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
@@ -59,7 +59,7 @@ services:
     depends_on:
       - elasticsearch
   kibana:
-    image: docker.elastic.co/kibana/kibana-oss:6.6.2
+    image: docker.elastic.co/kibana/kibana-oss:7.3.1
     environment:
       xpack.monitoring.enabled: 'true'
       # xpack.watcher.enabled: 'true'
